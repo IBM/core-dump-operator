@@ -1,0 +1,6 @@
+# Use the 'create api' subcommand to add watches to this file.
+- group: charts.com.ibm
+  version: v1alpha1
+  kind: CoreDumpHandler
+  chart: helm-charts/ibm-core-dump-handler
+#+kubebuilder:scaffold:watch

@@ -1,0 +1,24 @@
+# permissions for end users to edit coredumphandlers.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: coredumphandler-editor-role
+rules:
+- apiGroups:
+  - charts.com.ibm
+  resources:
+  - coredumphandlers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - charts.com.ibm
+  resources:
+  - coredumphandlers/status
+  verbs:
+  - get
