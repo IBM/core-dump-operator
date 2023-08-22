@@ -8,7 +8,13 @@ metadata:
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
-  customresourcedefinitions: {}
+  customresourcedefinitions:
+    owned:
+    - description: CoreDumpHandler is the Schema for the CoreDumpHandlers API
+      displayName: Core Dump Handler
+      kind: CoreDumpHandler
+      name: coredumphandlers.charts.ibm.com
+      version: v1alpha1
   description: An operator to manage core dumps
   displayName: Core Dump Handler
   icon:

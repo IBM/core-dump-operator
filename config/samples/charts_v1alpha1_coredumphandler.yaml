@@ -1,31 +1,10 @@
-apiVersion: charts.com.ibm/v1alpha1
+apiVersion: charts.ibm.com/v1alpha1
 kind: CoreDumpHandler
 metadata:
   name: coredumphandler-sample
+  namespace: core-dump-handler
 spec:
-  # Default values copied from <project_dir>/helm-charts/ibm-core-dump-handler/values.yaml
-  clusterRole:
-    name: core-dump-event-reporter
-  clusterRoleBinding:
-    name: core-dump-event-report
-  daemonset:
-    hostDirectory: /core-dump-handler
-    label: core-dump-ds
-    name: core-dump-handler
-    s3AccessKey: XXX
-    s3BucketName: XXX
-    s3Region: XXX
-    s3Secret: XXX
-    vendor: default
-  fullnameOverride: ""
-  image:
-    pullPolicy: IfNotPresent
-    repository: quay.io/number9/core-dump-handler:v2.0.10
-  imagePullSecrets: []
-  nameOverride: ""
-  replicaCount: 1
-  serviceAccount:
-    create: true
-    name: core-dump-admin
-  
-  
+  serviceAccount: core-dump-operator-uploader-sa # Uploader requires a service account with a secret and namespace reader role (see `config/rbac/uploader_sa_rbac.yaml`).
+  namespaceLabelSelector:
+    "kubernetes.io/metadata.name": "core-dump-handler"
+  openShift: true

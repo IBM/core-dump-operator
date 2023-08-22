@@ -1,0 +1,611 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.11.1
+  creationTimestamp: null
+  name: coredumphandlers.charts.ibm.com
+spec:
+  group: charts.ibm.com
+  names:
+    kind: CoreDumpHandler
+    listKind: CoreDumpHandlerList
+    plural: coredumphandlers
+    singular: coredumphandler
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: CoreDumpHandler is the Schema for the CoreDumpHandlers API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: CoreDumpHandlerSpec defines the desired state of CoreDumpHandler
+            properties:
+              affinity:
+                description: Affinity adds scheduling affinity
+                properties:
+                  nodeAffinity:
+                    description: NodeAffinityApplyConfiguration represents an declarative
+                      configuration of the NodeAffinity type for use with apply.
+                    properties:
+                      preferredDuringSchedulingIgnoredDuringExecution:
+                        items:
+                          description: PreferredSchedulingTermApplyConfiguration represents
+                            an declarative configuration of the PreferredSchedulingTerm
+                            type for use with apply.
+                          properties:
+                            preference:
+                              description: NodeSelectorTermApplyConfiguration represents
+                                an declarative configuration of the NodeSelectorTerm
+                                type for use with apply.
+                              properties:
+                                matchExpressions:
+                                  items:
+                                    description: NodeSelectorRequirementApplyConfiguration
+                                      represents an declarative configuration of the
+                                      NodeSelectorRequirement type for use with apply.
+                                    properties:
+                                      key:
+                                        type: string
+                                      operator:
+                                        description: A node selector operator is the
+                                          set of operators that can be used in a node
+                                          selector requirement.
+                                        type: string
+                                      values:
+                                        items:
+                                          type: string
+                                        type: array
+                                    type: object
+                                  type: array
+                                matchFields:
+                                  items:
+                                    description: NodeSelectorRequirementApplyConfiguration
+                                      represents an declarative configuration of the
+                                      NodeSelectorRequirement type for use with apply.
+                                    properties:
+                                      key:
+                                        type: string
+                                      operator:
+                                        description: A node selector operator is the
+                                          set of operators that can be used in a node
+                                          selector requirement.
+                                        type: string
+                                      values:
+                                        items:
+                                          type: string
+                                        type: array
+                                    type: object
+                                  type: array
+                              type: object
+                            weight:
+                              format: int32
+                              type: integer
+                          type: object
+                        type: array
+                      requiredDuringSchedulingIgnoredDuringExecution:
+                        description: NodeSelectorApplyConfiguration represents an
+                          declarative configuration of the NodeSelector type for use
+                          with apply.
+                        properties:
+                          nodeSelectorTerms:
+                            items:
+                              description: NodeSelectorTermApplyConfiguration represents
+                                an declarative configuration of the NodeSelectorTerm
+                                type for use with apply.
+                              properties:
+                                matchExpressions:
+                                  items:
+                                    description: NodeSelectorRequirementApplyConfiguration
+                                      represents an declarative configuration of the
+                                      NodeSelectorRequirement type for use with apply.
+                                    properties:
+                                      key:
+                                        type: string
+                                      operator:
+                                        description: A node selector operator is the
+                                          set of operators that can be used in a node
+                                          selector requirement.
+                                        type: string
+                                      values:
+                                        items:
+                                          type: string
+                                        type: array
+                                    type: object
+                                  type: array
+                                matchFields:
+                                  items:
+                                    description: NodeSelectorRequirementApplyConfiguration
+                                      represents an declarative configuration of the
+                                      NodeSelectorRequirement type for use with apply.
+                                    properties:
+                                      key:
+                                        type: string
+                                      operator:
+                                        description: A node selector operator is the
+                                          set of operators that can be used in a node
+                                          selector requirement.
+                                        type: string
+                                      values:
+                                        items:
+                                          type: string
+                                        type: array
+                                    type: object
+                                  type: array
+                              type: object
+                            type: array
+                        type: object
+                    type: object
+                  podAffinity:
+                    description: PodAffinityApplyConfiguration represents an declarative
+                      configuration of the PodAffinity type for use with apply.
+                    properties:
+                      preferredDuringSchedulingIgnoredDuringExecution:
+                        items:
+                          description: WeightedPodAffinityTermApplyConfiguration represents
+                            an declarative configuration of the WeightedPodAffinityTerm
+                            type for use with apply.
+                          properties:
+                            podAffinityTerm:
+                              description: PodAffinityTermApplyConfiguration represents
+                                an declarative configuration of the PodAffinityTerm
+                                type for use with apply.
+                              properties:
+                                labelSelector:
+                                  description: LabelSelectorApplyConfiguration represents
+                                    an declarative configuration of the LabelSelector
+                                    type for use with apply.
+                                  properties:
+                                    matchExpressions:
+                                      items:
+                                        description: LabelSelectorRequirementApplyConfiguration
+                                          represents an declarative configuration
+                                          of the LabelSelectorRequirement type for
+                                          use with apply.
+                                        properties:
+                                          key:
+                                            type: string
+                                          operator:
+                                            description: A label selector operator
+                                              is the set of operators that can be
+                                              used in a selector requirement.
+                                            type: string
+                                          values:
+                                            items:
+                                              type: string
+                                            type: array
+                                        type: object
+                                      type: array
+                                    matchLabels:
+                                      additionalProperties:
+                                        type: string
+                                      type: object
+                                  type: object
+                                namespaceSelector:
+                                  description: LabelSelectorApplyConfiguration represents
+                                    an declarative configuration of the LabelSelector
+                                    type for use with apply.
+                                  properties:
+                                    matchExpressions:
+                                      items:
+                                        description: LabelSelectorRequirementApplyConfiguration
+                                          represents an declarative configuration
+                                          of the LabelSelectorRequirement type for
+                                          use with apply.
+                                        properties:
+                                          key:
+                                            type: string
+                                          operator:
+                                            description: A label selector operator
+                                              is the set of operators that can be
+                                              used in a selector requirement.
+                                            type: string
+                                          values:
+                                            items:
+                                              type: string
+                                            type: array
+                                        type: object
+                                      type: array
+                                    matchLabels:
+                                      additionalProperties:
+                                        type: string
+                                      type: object
+                                  type: object
+                                namespaces:
+                                  items:
+                                    type: string
+                                  type: array
+                                topologyKey:
+                                  type: string
+                              type: object
+                            weight:
+                              format: int32
+                              type: integer
+                          type: object
+                        type: array
+                      requiredDuringSchedulingIgnoredDuringExecution:
+                        items:
+                          description: PodAffinityTermApplyConfiguration represents
+                            an declarative configuration of the PodAffinityTerm type
+                            for use with apply.
+                          properties:
+                            labelSelector:
+                              description: LabelSelectorApplyConfiguration represents
+                                an declarative configuration of the LabelSelector
+                                type for use with apply.
+                              properties:
+                                matchExpressions:
+                                  items:
+                                    description: LabelSelectorRequirementApplyConfiguration
+                                      represents an declarative configuration of the
+                                      LabelSelectorRequirement type for use with apply.
+                                    properties:
+                                      key:
+                                        type: string
+                                      operator:
+                                        description: A label selector operator is
+                                          the set of operators that can be used in
+                                          a selector requirement.
+                                        type: string
+                                      values:
+                                        items:
+                                          type: string
+                                        type: array
+                                    type: object
+                                  type: array
+                                matchLabels:
+                                  additionalProperties:
+                                    type: string
+                                  type: object
+                              type: object
+                            namespaceSelector:
+                              description: LabelSelectorApplyConfiguration represents
+                                an declarative configuration of the LabelSelector
+                                type for use with apply.
+                              properties:
+                                matchExpressions:
+                                  items:
+                                    description: LabelSelectorRequirementApplyConfiguration
+                                      represents an declarative configuration of the
+                                      LabelSelectorRequirement type for use with apply.
+                                    properties:
+                                      key:
+                                        type: string
+                                      operator:
+                                        description: A label selector operator is
+                                          the set of operators that can be used in
+                                          a selector requirement.
+                                        type: string
+                                      values:
+                                        items:
+                                          type: string
+                                        type: array
+                                    type: object
+                                  type: array
+                                matchLabels:
+                                  additionalProperties:
+                                    type: string
+                                  type: object
+                              type: object
+                            namespaces:
+                              items:
+                                type: string
+                              type: array
+                            topologyKey:
+                              type: string
+                          type: object
+                        type: array
+                    type: object
+                  podAntiAffinity:
+                    description: PodAntiAffinityApplyConfiguration represents an declarative
+                      configuration of the PodAntiAffinity type for use with apply.
+                    properties:
+                      preferredDuringSchedulingIgnoredDuringExecution:
+                        items:
+                          description: WeightedPodAffinityTermApplyConfiguration represents
+                            an declarative configuration of the WeightedPodAffinityTerm
+                            type for use with apply.
+                          properties:
+                            podAffinityTerm:
+                              description: PodAffinityTermApplyConfiguration represents
+                                an declarative configuration of the PodAffinityTerm
+                                type for use with apply.
+                              properties:
+                                labelSelector:
+                                  description: LabelSelectorApplyConfiguration represents
+                                    an declarative configuration of the LabelSelector
+                                    type for use with apply.
+                                  properties:
+                                    matchExpressions:
+                                      items:
+                                        description: LabelSelectorRequirementApplyConfiguration
+                                          represents an declarative configuration
+                                          of the LabelSelectorRequirement type for
+                                          use with apply.
+                                        properties:
+                                          key:
+                                            type: string
+                                          operator:
+                                            description: A label selector operator
+                                              is the set of operators that can be
+                                              used in a selector requirement.
+                                            type: string
+                                          values:
+                                            items:
+                                              type: string
+                                            type: array
+                                        type: object
+                                      type: array
+                                    matchLabels:
+                                      additionalProperties:
+                                        type: string
+                                      type: object
+                                  type: object
+                                namespaceSelector:
+                                  description: LabelSelectorApplyConfiguration represents
+                                    an declarative configuration of the LabelSelector
+                                    type for use with apply.
+                                  properties:
+                                    matchExpressions:
+                                      items:
+                                        description: LabelSelectorRequirementApplyConfiguration
+                                          represents an declarative configuration
+                                          of the LabelSelectorRequirement type for
+                                          use with apply.
+                                        properties:
+                                          key:
+                                            type: string
+                                          operator:
+                                            description: A label selector operator
+                                              is the set of operators that can be
+                                              used in a selector requirement.
+                                            type: string
+                                          values:
+                                            items:
+                                              type: string
+                                            type: array
+                                        type: object
+                                      type: array
+                                    matchLabels:
+                                      additionalProperties:
+                                        type: string
+                                      type: object
+                                  type: object
+                                namespaces:
+                                  items:
+                                    type: string
+                                  type: array
+                                topologyKey:
+                                  type: string
+                              type: object
+                            weight:
+                              format: int32
+                              type: integer
+                          type: object
+                        type: array
+                      requiredDuringSchedulingIgnoredDuringExecution:
+                        items:
+                          description: PodAffinityTermApplyConfiguration represents
+                            an declarative configuration of the PodAffinityTerm type
+                            for use with apply.
+                          properties:
+                            labelSelector:
+                              description: LabelSelectorApplyConfiguration represents
+                                an declarative configuration of the LabelSelector
+                                type for use with apply.
+                              properties:
+                                matchExpressions:
+                                  items:
+                                    description: LabelSelectorRequirementApplyConfiguration
+                                      represents an declarative configuration of the
+                                      LabelSelectorRequirement type for use with apply.
+                                    properties:
+                                      key:
+                                        type: string
+                                      operator:
+                                        description: A label selector operator is
+                                          the set of operators that can be used in
+                                          a selector requirement.
+                                        type: string
+                                      values:
+                                        items:
+                                          type: string
+                                        type: array
+                                    type: object
+                                  type: array
+                                matchLabels:
+                                  additionalProperties:
+                                    type: string
+                                  type: object
+                              type: object
+                            namespaceSelector:
+                              description: LabelSelectorApplyConfiguration represents
+                                an declarative configuration of the LabelSelector
+                                type for use with apply.
+                              properties:
+                                matchExpressions:
+                                  items:
+                                    description: LabelSelectorRequirementApplyConfiguration
+                                      represents an declarative configuration of the
+                                      LabelSelectorRequirement type for use with apply.
+                                    properties:
+                                      key:
+                                        type: string
+                                      operator:
+                                        description: A label selector operator is
+                                          the set of operators that can be used in
+                                          a selector requirement.
+                                        type: string
+                                      values:
+                                        items:
+                                          type: string
+                                        type: array
+                                    type: object
+                                  type: array
+                                matchLabels:
+                                  additionalProperties:
+                                    type: string
+                                  type: object
+                              type: object
+                            namespaces:
+                              items:
+                                type: string
+                              type: array
+                            topologyKey:
+                              type: string
+                          type: object
+                        type: array
+                    type: object
+                type: object
+              crioEndPoint:
+                default: unix:///run/containerd/containerd.sock
+                description: CrioEndPoint is the CRI-O's socket path to collect runtime
+                  information
+                type: string
+              handlerImage:
+                default: quay.io/icdh/core-dump-handler:v8.10.0
+                description: HandlerImage is the image for core-dump-handler to collect
+                  core dumps and runtime informations
+                type: string
+              hostDir:
+                default: /mnt/core-dump-handler
+                description: HostDir is a directory path in the host filesystem to
+                  collect core dumps and generate zip files
+                type: string
+              imagePullSecret:
+                description: ImagePullSecret is used to download uploaderImage
+                type: string
+              namespaceLabelSelector:
+                additionalProperties:
+                  type: string
+                description: NamespaceLabelSelector restricts namespaces that collect
+                  core dumps
+                type: object
+              nodeSelector:
+                additionalProperties:
+                  type: string
+                description: NodeSelector restricts nodes that can run core dump daemonsets
+                type: object
+              openShift:
+                description: OpenShift specifies to handle securityContextConstraints
+                type: boolean
+              resource:
+                description: Resource specifies resource requirements for each container
+                properties:
+                  claims:
+                    description: "Claims lists the names of resources, defined in
+                      spec.resourceClaims, that are used by this container. \n This
+                      is an alpha field and requires enabling the DynamicResourceAllocation
+                      feature gate. \n This field is immutable. It can only be set
+                      for containers."
+                    items:
+                      description: ResourceClaim references one entry in PodSpec.ResourceClaims.
+                      properties:
+                        name:
+                          description: Name must match the name of one entry in pod.spec.resourceClaims
+                            of the Pod where this field is used. It makes that resource
+                            available inside a container.
+                          type: string
+                      required:
+                      - name
+                      type: object
+                    type: array
+                    x-kubernetes-list-map-keys:
+                    - name
+                    x-kubernetes-list-type: map
+                  limits:
+                    additionalProperties:
+                      anyOf:
+                      - type: integer
+                      - type: string
+                      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                      x-kubernetes-int-or-string: true
+                    description: 'Limits describes the maximum amount of compute resources
+                      allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                    type: object
+                  requests:
+                    additionalProperties:
+                      anyOf:
+                      - type: integer
+                      - type: string
+                      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                      x-kubernetes-int-or-string: true
+                    description: 'Requests describes the minimum amount of compute
+                      resources required. If Requests is omitted for a container,
+                      it defaults to Limits if that is explicitly specified, otherwise
+                      to an implementation-defined value. Requests cannot exceed Limits.
+                      More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                    type: object
+                type: object
+              serviceAccount:
+                description: ServiceAccount is associated to daemonset pods that get/list
+                  secrets and namespaces
+                type: string
+              tolerations:
+                description: Tolerations enable scheduling on nodes with taints
+                items:
+                  description: The pod this Toleration is attached to tolerates any
+                    taint that matches the triple <key,value,effect> using the matching
+                    operator <operator>.
+                  properties:
+                    effect:
+                      description: Effect indicates the taint effect to match. Empty
+                        means match all taint effects. When specified, allowed values
+                        are NoSchedule, PreferNoSchedule and NoExecute.
+                      type: string
+                    key:
+                      description: Key is the taint key that the toleration applies
+                        to. Empty means match all taint keys. If the key is empty,
+                        operator must be Exists; this combination means to match all
+                        values and all keys.
+                      type: string
+                    operator:
+                      description: Operator represents a key's relationship to the
+                        value. Valid operators are Exists and Equal. Defaults to Equal.
+                        Exists is equivalent to wildcard for value, so that a pod
+                        can tolerate all taints of a particular category.
+                      type: string
+                    tolerationSeconds:
+                      description: TolerationSeconds represents the period of time
+                        the toleration (which must be of effect NoExecute, otherwise
+                        this field is ignored) tolerates the taint. By default, it
+                        is not set, which means tolerate the taint forever (do not
+                        evict). Zero and negative values will be treated as 0 (evict
+                        immediately) by the system.
+                      format: int64
+                      type: integer
+                    value:
+                      description: Value is the taint value the toleration matches
+                        to. If the operator is Exists, the value should be empty,
+                        otherwise just a regular string.
+                      type: string
+                  type: object
+                type: array
+              uploaderImage:
+                default: ghcr.io/ibm/core-dump-operator/core-dump-uploader:0.0.1
+                description: UploaderImage is the image for core-dump-uploader to
+                  upload zip files generated by handlerImage containers
+                type: string
+            type: object
+          status:
+            description: CoreDumpHandlerStatus defines the observed state of CoreDumpHandler
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: segfaulter
+  namespace: core-dump-handler
+spec:
+  containers:
+   - image: quay.io/icdh/segfaulter:latest
+     name: test
+  restartPolicy: Never

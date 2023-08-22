@@ -22,16 +22,23 @@ spec:
       labels:
         control-plane: controller-manager
     spec:
+      imagePullSecrets:
+      - name: taas
       securityContext:
         runAsNonRoot: true
       containers:
       - args:
         - --leader-elect
-        - --leader-election-id=core-dump-operator
+        command:
+        - /manager
         image: controller:latest
+        imagePullPolicy: Always
         name: manager
         securityContext:
           allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - "ALL"
         livenessProbe:
           httpGet:
             path: /healthz
