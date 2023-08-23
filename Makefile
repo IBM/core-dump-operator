@@ -32,7 +32,7 @@ BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 #
 # For example, running 'make bundle-build bundle-push catalog-build catalog-push' will build and push both
 # ibm.com/core-dump-operator-bundle:$VERSION and ibm.com/core-dump-operator-catalog:$VERSION.
-IMAGE_TAG_BASE ?= quay.io/number9/core-dump-operator
+IMAGE_TAG_BASE ?= ghcr.io/core-dump-operator/core-dump-operator
 
 # BUNDLE_IMG defines the image:tag used for the bundle.
 # You can use it as an arg. (E.g make bundle-build BUNDLE_IMG=<some-registry>/<project-name-bundle>:<tag>)
@@ -282,4 +282,3 @@ uploader-push: uploader-cbuild
 uploader-test: fmt vet envtest ## Run tests.
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" go test ./cmd/... -coverprofile uploader-cover.out
 	go tool cover -html=uploader-cover.out -o uploader-cover.html
-

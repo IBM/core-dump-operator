@@ -6,5 +6,5 @@ metadata:
 spec:
   serviceAccount: core-dump-operator-uploader-sa # Uploader requires a service account with a secret and namespace reader role (see `config/rbac/uploader_sa_rbac.yaml`).
   namespaceLabelSelector:
-    "kubernetes.io/metadata.name": "core-dump-handler"
+    "core-dump-handler": "enabled"
   openShift: true
