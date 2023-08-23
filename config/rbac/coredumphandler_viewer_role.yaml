@@ -5,7 +5,7 @@ metadata:
   name: coredumphandler-viewer-role
 rules:
 - apiGroups:
-  - charts.com.ibm
+  - charts.ibm.com
   resources:
   - coredumphandlers
   verbs:
@@ -13,7 +13,7 @@ rules:
   - list
   - watch
 - apiGroups:
-  - charts.com.ibm
+  - charts.ibm.com
   resources:
   - coredumphandlers/status
   verbs:
