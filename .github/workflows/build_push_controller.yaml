@@ -25,8 +25,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: build-push-controller
     env:
-      IMAGE_NAME: ghcr.io/${{ github.repository }}/core-dump-operator
-      BUNDLE_IMAGE_NAME: ghcr.io/${{ github.repository }}/core-dump-operator-bundle
+      IMAGE_NAME: ghcr.io/ibm/core-dump-operator/core-dump-operator
+      BUNDLE_IMAGE_NAME: ghcr.io/ibm/core-dump-operator/core-dump-operator-bundle
       CHANNELS: stable
       DEFAULT_CHANNEL: stable
     steps:
@@ -69,7 +69,7 @@ jobs:
   build-push-controller:
     runs-on: ubuntu-latest
     env:
-      IMAGE_NAME: ghcr.io/${{ github.repository }}/core-dump-operator
+      IMAGE_NAME: ghcr.io/ibm/core-dump-operator/core-dump-operator
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v2
@@ -101,7 +101,7 @@ jobs:
   build-push-uploader:
     runs-on: ubuntu-latest
     env:
-      IMAGE_NAME: ghcr.io/${{ github.repository }}/core-dump-uploader
+      IMAGE_NAME: ghcr.io/ibm/core-dump-operator/core-dump-uploader
       CGO_ENABLED: 0
       GOOS: linux
     steps:
