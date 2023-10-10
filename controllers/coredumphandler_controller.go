@@ -27,7 +27,7 @@ import (
 	corev1apply "k8s.io/client-go/applyconfigurations/core/v1"
 	metav1apply "k8s.io/client-go/applyconfigurations/meta/v1"
 	"k8s.io/utils/pointer"
-	ccharts "sigs.k8s.io/controller-runtime"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -61,7 +61,7 @@ type CoreDumpHandlerReconciler struct {
 //
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.14.1/pkg/reconcile
-func (r *CoreDumpHandlerReconciler) Reconcile(ctx context.Context, req ccharts.Request) (ccharts.Result, error) {
+func (r *CoreDumpHandlerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 	l := logger.WithValues("CoreDumpHandler", req.NamespacedName)
 	cdu := &chartsv1alpha1.CoreDumpHandler{}
@@ -69,10 +69,10 @@ func (r *CoreDumpHandlerReconciler) Reconcile(ctx context.Context, req ccharts.R
 	var requeue = false
 	if err != nil {
 		if errors.IsNotFound(err) {
-			return ccharts.Result{}, nil
+			return ctrl.Result{}, nil
 		}
 		l.Error(err, "Failed: Reconcile, Get", "namespace", req.Namespace, "name", req.Name)
-		return ccharts.Result{RequeueAfter: 100 * time.Millisecond}, err
+		return ctrl.Result{RequeueAfter: 100 * time.Millisecond}, err
 	}
 
 	// Add finalizer to instance
@@ -80,16 +80,16 @@ func (r *CoreDumpHandlerReconciler) Reconcile(ctx context.Context, req ccharts.R
 		controllerutil.AddFinalizer(cdu, coredumpHandlerFinalizer)
 		err = r.Update(ctx, cdu)
 		if err != nil {
-			return ccharts.Result{RequeueAfter: 100 * time.Millisecond}, err
+			return ctrl.Result{RequeueAfter: 100 * time.Millisecond}, err
 		}
 	}
 	if cdu.GetDeletionTimestamp() != nil {
 		if controllerutil.ContainsFinalizer(cdu, coredumpHandlerFinalizer) {
 			if requeue, err = r.DeleteCluster(ctx, cdu, l); requeue || err != nil {
-				return ccharts.Result{Requeue: requeue, RequeueAfter: 100 * time.Millisecond}, err
+				return ctrl.Result{Requeue: requeue, RequeueAfter: 100 * time.Millisecond}, err
 			}
 			if requeue, err = r.DeleteScc(ctx, cdu, l); requeue || err != nil {
-				return ccharts.Result{Requeue: requeue, RequeueAfter: 100 * time.Millisecond}, err
+				return ctrl.Result{Requeue: requeue, RequeueAfter: 100 * time.Millisecond}, err
 			}
 			controllerutil.RemoveFinalizer(cdu, coredumpHandlerFinalizer)
 			err = r.Update(ctx, cdu)
@@ -99,18 +99,18 @@ func (r *CoreDumpHandlerReconciler) Reconcile(ctx context.Context, req ccharts.R
 		}
 	} else {
 		if requeue, err = r.UpdateScc(ctx, cdu, l); requeue || err != nil {
-			return ccharts.Result{Requeue: requeue, RequeueAfter: 100 * time.Millisecond}, err
+			return ctrl.Result{Requeue: requeue, RequeueAfter: 100 * time.Millisecond}, err
 		}
 		if requeue, err = r.UpdateCluster(ctx, cdu, l); requeue || err != nil {
-			return ccharts.Result{Requeue: requeue, RequeueAfter: 100 * time.Millisecond}, err
+			return ctrl.Result{Requeue: requeue, RequeueAfter: 100 * time.Millisecond}, err
 		}
 	}
-	return ccharts.Result{Requeue: requeue}, err
+	return ctrl.Result{Requeue: requeue}, err
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *CoreDumpHandlerReconciler) SetupWithManager(mgr ccharts.Manager) error {
-	return ccharts.NewControllerManagedBy(mgr).
+func (r *CoreDumpHandlerReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	return ctrl.NewControllerManagedBy(mgr).
 		For(&chartsv1alpha1.CoreDumpHandler{}).
 		Owns(&appsv1.DaemonSet{}).
 		Complete(r)

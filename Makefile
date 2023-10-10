@@ -107,6 +107,7 @@ vet: ## Run go vet against code.
 .PHONY: operator-test
 operator-test: manifests generate fmt vet envtest ## Run tests.
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" go test ./controllers/... -coverprofile operator-cover.out
+	go tool cover -html=operator-cover.out -o operator-cover.html
 
 ##@ Build
 
@@ -279,6 +280,6 @@ uploader-push: uploader-cbuild
 	docker push $(UPLOADER_IMAGE_TAG_BASE):$(VERSION)
 
 .PHONY: uploader-test
-uploader-test: fmt vet envtest ## Run tests.
-	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" go test ./cmd/... -coverprofile uploader-cover.out
+uploader-test: fmt vet ## Run tests.
+	go test ./cmd/... -coverprofile uploader-cover.out
 	go tool cover -html=uploader-cover.out -o uploader-cover.html
