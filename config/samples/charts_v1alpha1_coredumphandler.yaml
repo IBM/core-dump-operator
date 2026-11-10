@@ -8,3 +8,4 @@ spec:
   namespaceLabelSelector:
     "core-dump-handler": "enabled"
   openShift: true
+  allowAllNodes: true # Administrator opt-in to deploying privileged agents on all eligible nodes.

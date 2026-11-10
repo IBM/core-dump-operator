@@ -14,13 +14,12 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/google/go-cmp/cmp"
-	securityv1 "github.com/openshift/api/security/v1"
-	securityv1apply "github.com/openshift/client-go/security/applyconfigurations/security/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	appsv1apply "k8s.io/client-go/applyconfigurations/apps/v1"
@@ -43,6 +42,8 @@ const fieldManager = "core-dump-operator"
 type CoreDumpHandlerReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
+	// ManagedNamespace is the trusted namespace allowed to configure privileged agents.
+	ManagedNamespace string
 }
 
 //+kubebuilder:rbac:groups=charts.ibm.com,resources=coredumphandlers,verbs=get;list;watch;create;update;patch;delete
@@ -50,7 +51,7 @@ type CoreDumpHandlerReconciler struct {
 //+kubebuilder:rbac:groups=charts.ibm.com,resources=coredumphandlers/finalizers,verbs=update
 
 //+kubebuilder:rbac:groups=apps,resources=daemonsets,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=security.openshift.io,resources=securitycontextconstraints,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=security.openshift.io,resources=securitycontextconstraints,verbs=get;list;watch;create;update;delete
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -62,6 +63,12 @@ type CoreDumpHandlerReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.14.1/pkg/reconcile
 func (r *CoreDumpHandlerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	if r.ManagedNamespace == "" {
+		return ctrl.Result{}, fmt.Errorf("managed namespace must be configured")
+	}
+	if req.Namespace != r.ManagedNamespace {
+		return ctrl.Result{}, nil
+	}
 	logger := log.FromContext(ctx)
 	l := logger.WithValues("CoreDumpHandler", req.NamespacedName)
 	cdu := &chartsv1alpha1.CoreDumpHandler{}
@@ -75,14 +82,6 @@ func (r *CoreDumpHandlerReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		return ctrl.Result{RequeueAfter: 100 * time.Millisecond}, err
 	}
 
-	// Add finalizer to instance
-	if !controllerutil.ContainsFinalizer(cdu, coredumpHandlerFinalizer) {
-		controllerutil.AddFinalizer(cdu, coredumpHandlerFinalizer)
-		err = r.Update(ctx, cdu)
-		if err != nil {
-			return ctrl.Result{RequeueAfter: 100 * time.Millisecond}, err
-		}
-	}
 	if cdu.GetDeletionTimestamp() != nil {
 		if controllerutil.ContainsFinalizer(cdu, coredumpHandlerFinalizer) {
 			if requeue, err = r.DeleteCluster(ctx, cdu, l); requeue || err != nil {
@@ -98,6 +97,15 @@ func (r *CoreDumpHandlerReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 			}
 		}
 	} else {
+		if err := validateHandler(cdu); err != nil {
+			return ctrl.Result{}, err
+		}
+		if !controllerutil.ContainsFinalizer(cdu, coredumpHandlerFinalizer) {
+			controllerutil.AddFinalizer(cdu, coredumpHandlerFinalizer)
+			if err := r.Update(ctx, cdu); err != nil {
+				return ctrl.Result{}, err
+			}
+		}
 		if requeue, err = r.UpdateScc(ctx, cdu, l); requeue || err != nil {
 			return ctrl.Result{Requeue: requeue, RequeueAfter: 100 * time.Millisecond}, err
 		}
@@ -120,82 +128,6 @@ func GetLabels(cdu *chartsv1alpha1.CoreDumpHandler) map[string]string {
 	return map[string]string{"app": "core-dump-handler", "cluster": cdu.Name}
 }
 
-func (r *CoreDumpHandlerReconciler) UpdateScc(ctx context.Context, cdu *chartsv1alpha1.CoreDumpHandler, l logr.Logger) (requeue bool, err error) {
-	if !cdu.Spec.OpenShift {
-		return false, nil
-	}
-	var scc, origApplyConfig *securityv1apply.SecurityContextConstraintsApplyConfiguration
-	var orig securityv1.SecurityContextConstraints
-	err = r.Get(ctx, client.ObjectKey{Name: cdu.Name}, &orig)
-	if err != nil && !errors.IsNotFound(err) {
-		l.Error(err, "Failed: UpdateScc, Get")
-		return false, err
-	} else if err == nil {
-		origApplyConfig, err = securityv1apply.ExtractSecurityContextConstraints(&orig, fieldManager)
-		if err != nil {
-			l.Error(err, "Failed: UpdateNodes, ExtractSecurityContextConstraints")
-			return false, err
-		}
-		copied := *origApplyConfig
-		scc = &copied
-		scc.AllowedCapabilities = nil
-		scc.ForbiddenSysctls = nil
-		scc.Volumes = nil
-		scc.Users = nil
-		scc.OwnerReferences = nil
-	} else {
-		scc = securityv1apply.SecurityContextConstraints(cdu.Name)
-	}
-	scc.WithAllowHostDirVolumePlugin(true).WithAllowPrivilegeEscalation(true).WithAllowPrivilegedContainer(true).
-		WithAllowHostIPC(false).WithAllowHostNetwork(false).WithAllowHostPID(false).WithAllowHostPorts(false).
-		WithAllowedCapabilities("").WithForbiddenSysctls("*").WithDefaultAllowPrivilegeEscalation(true).
-		WithFSGroup(securityv1apply.FSGroupStrategyOptions().WithType(securityv1.FSGroupStrategyRunAsAny)).
-		WithReadOnlyRootFilesystem(false).
-		WithRunAsUser(securityv1apply.RunAsUserStrategyOptions().WithType(securityv1.RunAsUserStrategyRunAsAny)).
-		WithSELinuxContext(securityv1apply.SELinuxContextStrategyOptions().WithType(securityv1.SELinuxStrategyRunAsAny)).
-		WithSupplementalGroups(securityv1apply.SupplementalGroupsStrategyOptions().WithType(securityv1.SupplementalGroupsStrategyRunAsAny)).
-		WithVolumes(securityv1.FSTypeSecret, securityv1.FSTypePersistentVolumeClaim).
-		WithPriority(10).WithUsers(fmt.Sprintf("system:serviceaccount:%s:%s", cdu.Namespace, cdu.Spec.ServiceAccount))
-
-	gvk, err := apiutil.GVKForObject(cdu, r.Scheme)
-	if err != nil {
-		l.Error(err, "Failed: UpdateScc, GVKForObject")
-		return false, err
-	}
-	scc.WithOwnerReferences(metav1apply.OwnerReference().
-		WithAPIVersion(gvk.GroupVersion().String()).
-		WithKind(gvk.Kind).
-		WithName(cdu.Name).
-		WithUID(cdu.GetUID()).
-		WithBlockOwnerDeletion(true).
-		WithController(true))
-
-	firstApply := origApplyConfig == nil
-	if !firstApply {
-		if equality.Semantic.DeepEqual(scc, origApplyConfig) {
-			return false, nil
-		}
-		diff := cmp.Diff(*origApplyConfig, *scc)
-		if len(diff) > 0 {
-			l.Info("UpdateScc, Patch", "diff", diff)
-		}
-	}
-	obj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(scc)
-	if err != nil {
-		l.Error(err, "Failed: UpdateScc, ToUnstructured")
-		return false, err
-	}
-	patch := &unstructured.Unstructured{Object: obj}
-	if err = r.Patch(ctx, patch, client.Apply, &client.PatchOptions{FieldManager: fieldManager, Force: pointer.Bool(true)}); err != nil {
-		l.Error(err, "Failed: UpdateScc, Patch", "name", *scc.Name)
-		return false, err
-	}
-	if firstApply {
-		l.Info("Success: UpdateScc, Patch (first)", "name", *scc.Name)
-	}
-	return false, nil
-}
-
 func (r *CoreDumpHandlerReconciler) UpdateCluster(ctx context.Context, cdu *chartsv1alpha1.CoreDumpHandler, l logr.Logger) (requeue bool, err error) {
 	var ds, origApplyConfig *appsv1apply.DaemonSetApplyConfiguration
 	var orig appsv1.DaemonSet
@@ -204,6 +136,9 @@ func (r *CoreDumpHandlerReconciler) UpdateCluster(ctx context.Context, cdu *char
 		l.Error(err, "Failed: UpdateCluster, Get")
 		return false, err
 	} else if err == nil {
+		if !metav1.IsControlledBy(&orig, cdu) {
+			return false, fmt.Errorf("refusing to modify DaemonSet %s/%s: ownership does not match", orig.Namespace, orig.Name)
+		}
 		origApplyConfig, err = appsv1apply.ExtractDaemonSet(&orig, fieldManager)
 		if err != nil {
 			l.Error(err, "Failed: UpdateNodes, ExtractDaemonSet")
@@ -329,18 +264,25 @@ func (r *CoreDumpHandlerReconciler) UpdateCluster(ctx context.Context, cdu *char
 			l.Info("UpdateCluster, Patch", "diff", diff)
 		}
 	}
+	if !firstApply {
+		ds.WithResourceVersion(orig.ResourceVersion)
+	}
 	obj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(ds)
 	if err != nil {
 		l.Error(err, "Failed: UpdateCluster, ToUnstructured")
 		return false, err
 	}
 	patch := &unstructured.Unstructured{Object: obj}
+	if firstApply {
+		if err := r.Create(ctx, patch, client.FieldOwner(fieldManager)); err != nil {
+			return false, err
+		}
+		l.Info("Success: UpdateCluster, Create", "namespace", cdu.Namespace, "name", cdu.Name)
+		return false, nil
+	}
 	if err = r.Patch(ctx, patch, client.Apply, &client.PatchOptions{FieldManager: fieldManager, Force: pointer.Bool(true)}); err != nil {
 		l.Error(err, "Failed: UpdateCluster, Patch", "namespace", *ds.Namespace, "name", *ds.Name)
 		return false, err
-	}
-	if firstApply {
-		l.Info("Success: UpdateCluster, Patch (first)", "namespace", *ds.Namespace, "name", *ds.Name)
 	}
 	return false, nil
 }
@@ -357,33 +299,16 @@ func (r *CoreDumpHandlerReconciler) DeleteCluster(ctx context.Context, cdu *char
 		return false, err
 	}
 
-	if err := r.Delete(ctx, found); err != nil {
+	if !metav1.IsControlledBy(found, cdu) {
+		l.Info("Leaving DaemonSet with different ownership untouched", "namespace", found.Namespace, "name", found.Name)
+		return false, nil
+	}
+	if err := r.Delete(ctx, found, &client.DeleteOptions{Preconditions: &metav1.Preconditions{
+		UID: &found.UID, ResourceVersion: &found.ResourceVersion,
+	}}); client.IgnoreNotFound(err) != nil {
 		l.Error(err, "Failed: DeleteCluster, Delete", "namespace", found.Namespace, "name", found.Name)
 		return false, err
 	}
 	l.Info("Success: DeleteCluster", "namespace", found.Namespace, "name", found.Name)
-	return false, nil
-}
-
-func (r *CoreDumpHandlerReconciler) DeleteScc(ctx context.Context, cdu *chartsv1alpha1.CoreDumpHandler, l logr.Logger) (requeue bool, err error) {
-	if !cdu.Spec.OpenShift {
-		return false, nil
-	}
-	found := &securityv1.SecurityContextConstraints{}
-	key := client.ObjectKey{Name: cdu.Name}
-	err = r.Get(ctx, key, found)
-	if err != nil {
-		if errors.IsNotFound(err) {
-			return false, nil
-		}
-		l.Error(err, "Failed: DeleteScc, Get")
-		return false, err
-	}
-
-	if err := r.Delete(ctx, found); err != nil {
-		l.Error(err, "Failed: DeleteScc, Delete", "name", found.Name)
-		return false, err
-	}
-	l.Info("Success: DeleteScc", "name", found.Name)
 	return false, nil
 }

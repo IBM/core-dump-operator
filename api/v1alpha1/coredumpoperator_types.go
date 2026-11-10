@@ -18,6 +18,7 @@ import (
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
 // CoreDumpHandlerSpec defines the desired state of CoreDumpHandler
+// +kubebuilder:validation:XValidation:rule="(has(self.allowAllNodes) && self.allowAllNodes) || (has(self.nodeSelector) && size(self.nodeSelector) > 0)",message="set a nonempty nodeSelector or explicitly enable allowAllNodes"
 type CoreDumpHandlerSpec struct {
 	// CrioEndPoint is the CRI-O's socket path to collect runtime information
 	//+kubebuilder:default="unix:///run/containerd/containerd.sock"
@@ -25,6 +26,7 @@ type CoreDumpHandlerSpec struct {
 
 	// HostDir is a directory path in the host filesystem to collect core dumps and generate zip files
 	//+kubebuilder:default="/mnt/core-dump-handler"
+	//+kubebuilder:validation:Pattern=`^/mnt/core-dump-handler(/[A-Za-z0-9_-][A-Za-z0-9_.-]*)*$`
 	HostDir string `json:"hostDir,omitempty"`
 
 	// HandlerImage is the image for core-dump-handler to collect core dumps and runtime informations
@@ -43,6 +45,10 @@ type CoreDumpHandlerSpec struct {
 
 	// NodeSelector restricts nodes that can run core dump daemonsets
 	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
+
+	// AllowAllNodes explicitly permits scheduling without a node selector.
+	// Only trusted administrators may configure CoreDumpHandler resources.
+	AllowAllNodes bool `json:"allowAllNodes,omitempty"`
 
 	// NamespaceLabelSelector restricts namespaces that collect core dumps
 	NamespaceLabelSelector map[string]string `json:"namespaceLabelSelector,omitempty"`
